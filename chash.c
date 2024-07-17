@@ -1,11 +1,20 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <pthread.h>
+#include <semaphore.h>
+
+rwlock_t mutex;
 
 uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length);
 void insert(char* key_name, uint32_t salary);
 void delete(char* key_name);
 uint32_t search(char* key_name);
+void rwlock_acquire_readlock(rwlock_t* lock);
+void rwlock_release_readlock(rwlock_t* lock);
+void rwlock_acquire_writelock(rwlock_t* lock);
+void rwlock_release_writelock(rwlock_t* lock);
+void rwlock_init(rwlock_t* lock);
 
 typedef struct hash_struct {
     uint32_t hash;
@@ -14,16 +23,16 @@ typedef struct hash_struct {
     struct hash_struct* next;
 } hashRecord;
 
+typedef struct _rwlock_t {
+    sem_t writelock;
+    sem_t lock;
+    int readers;
+} rwlock_t;
+
 int main() {
-
-    // FILE* commands = fopen("commands.txt", "r");
-
-    // char buffer[] = fscanf(commands, "%s %s,%s", buffer);
 
     return 0;
 }
-
-
 
 uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length) {
     size_t i = 0;
@@ -80,4 +89,34 @@ uint32_t search(char* key_name) {
     //search LL for the key
 
     //if found, return value; otherwise, return null
+}
+
+void rwlock_init(rwlock_t* lock) {
+    lock->readers = 0;
+    Sem_init(&lock->lock, 1);
+    Sem_init(&lock->writelock, 1);
+}
+
+void rwlock_acquire_readlock(rwlock_t* lock) {
+    Sem_wait(&lock->lock);
+    lock->readers++;
+    if (lock->readers == 1)
+        Sem_wait(&lock->writelock);
+    Sem_post(&lock->lock);
+}
+
+void rwlock_release_readlock(rwlock_t* lock) {
+    Sem_wait(&lock->lock);
+    lock->readers--;
+    if (lock->readers == 0)
+        Sem_post(&lock->writelock);
+    Sem_post(&lock->lock);
+}
+
+void rwlock_acquire_writelock(rwlock_t* lock) {
+    Sem_wait(&lock->writelock);
+}
+
+void rwlock_release_writelock(rwlock_t* lock) {
+    Sem_post(&lock->writelock);
 }
