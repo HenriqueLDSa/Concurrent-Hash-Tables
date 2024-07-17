@@ -48,7 +48,7 @@ void delete(char key_name[]) {
 
     //search LL for the key
 
-    //if key is found, remove node and free memory; otherwise, do nothing
+    //if key is found, remove node and free memory; otherwise, do nothing and return
 
     //release writer-lock and return
 }
