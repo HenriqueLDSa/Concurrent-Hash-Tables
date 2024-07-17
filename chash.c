@@ -4,8 +4,6 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-rwlock_t mutex;
-
 uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length);
 void insert(char* key_name, uint32_t salary);
 void delete(char* key_name);
@@ -28,6 +26,9 @@ typedef struct _rwlock_t {
     sem_t lock;
     int readers;
 } rwlock_t;
+
+rwlock_t mutex;
+hashRecord* head = NULL;
 
 int main() {
 
@@ -53,15 +54,25 @@ uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length) {
 }
 
 //inserts a new key-value pair node or updates an existing one
-void insert(char* key_name, uint32_t salary) {
+void insert(char key_name[], uint32_t salary) {
     //compute the hash value of the key
     uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, sizeof(key_name) - 1);
 
     //acquire the writer-lock that protects the list and searches the linked list for the hash
+    rwlock_acquire_writelock(&mutex);
 
     //if found, update it; if not, add it to the LL
+    hashRecord* temp = head;
+    while (temp != NULL) {
+        if (temp->hash == hash) {
+            strcpy(temp->name, key_name);
+            temp->salary = salary;
+        }
 
-    //release writer-lock and return
+    }
+
+    //release writer-lock
+    rwlock_release_writelock(&mutex);
 }
 
 //deletes key-value pair node if it exists
