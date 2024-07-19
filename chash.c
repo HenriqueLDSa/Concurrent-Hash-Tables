@@ -1,18 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include <pthread.h>
 #include <semaphore.h>
-
-uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length);
-void insert(char* key_name, uint32_t salary);
-void delete(char* key_name);
-uint32_t search(char* key_name);
-void rwlock_acquire_readlock(rwlock_t* lock);
-void rwlock_release_readlock(rwlock_t* lock);
-void rwlock_acquire_writelock(rwlock_t* lock);
-void rwlock_release_writelock(rwlock_t* lock);
-void rwlock_init(rwlock_t* lock);
 
 typedef struct hash_struct {
     uint32_t hash;
@@ -26,6 +17,16 @@ typedef struct _rwlock_t {
     sem_t lock;
     int readers;
 } rwlock_t;
+
+uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length);
+void insert(char* key_name, uint32_t salary);
+void delete(char* key_name);
+uint32_t search(char* key_name);
+void rwlock_acquire_readlock(rwlock_t* lock);
+void rwlock_release_readlock(rwlock_t* lock);
+void rwlock_acquire_writelock(rwlock_t* lock);
+void rwlock_release_writelock(rwlock_t* lock);
+void rwlock_init(rwlock_t* lock);
 
 rwlock_t mutex;
 hashRecord* head = NULL;
@@ -54,9 +55,9 @@ uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length) {
 }
 
 //inserts a new key-value pair node or updates an existing one
-void insert(char key_name[], uint32_t salary) {
+void insert(char* key_name, uint32_t salary) {
     //compute the hash value of the key
-    uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, sizeof(key_name) - 1);
+    uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name));
 
     //acquire the writer-lock that protects the list and searches the linked list for the hash
     rwlock_acquire_writelock(&mutex);
@@ -70,7 +71,7 @@ void insert(char key_name[], uint32_t salary) {
             break;
         }
         else if (temp->next == NULL) {
-            hashRecord* newNode = malloc(sizeof(hashRecord));
+            hashRecord* newNode = (hashRecord*)malloc(sizeof(hashRecord));
             strcpy(newNode->name, key_name);
             newNode->salary = salary;
             newNode->hash = hash;
@@ -89,7 +90,7 @@ void insert(char key_name[], uint32_t salary) {
 //deletes key-value pair node if it exists
 void delete(char* key_name) {
     //compute the hash value of the key
-    uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, sizeof(key_name) - 1);
+    uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name));
 
     //acquire the writer-lock
 
@@ -104,7 +105,7 @@ void delete(char* key_name) {
 //if found, the caller prints the record; otherwise, the caller prints "No Record Found"
 uint32_t search(char* key_name) {
     //compute the hash value of the key
-    uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, sizeof(key_name) - 1);
+    uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name));
 
     // acquire reader-lock
 
