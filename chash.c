@@ -18,10 +18,11 @@ typedef struct _rwlock_t {
     int readers;
 } rwlock_t;
 
+
 uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length);
 void insert(char* key_name, uint32_t salary);
 void delete(char* key_name);
-uint32_t search(char* key_name);
+hashRecord* search(char* key_name);
 void rwlock_acquire_readlock(rwlock_t* lock);
 void rwlock_release_readlock(rwlock_t* lock);
 void rwlock_acquire_writelock(rwlock_t* lock);
@@ -30,6 +31,8 @@ void rwlock_init(rwlock_t* lock);
 
 rwlock_t mutex;
 hashRecord* head = NULL;
+int lock_acquisitions = 0;
+int lock_releases = 0;
 
 int main() {
 
@@ -57,10 +60,22 @@ uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length) {
 //inserts a new key-value pair node or updates an existing one
 void insert(char* key_name, uint32_t salary) {
     //compute the hash value of the key
-    uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name));
-
+    uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name) - 1);
+    
     //acquire the writer-lock that protects the list and searches the linked list for the hash
     rwlock_acquire_writelock(&mutex);
+
+    if (head == NULL)
+    {
+        hashRecord* newNode = malloc(sizeof(hashRecord));
+        strcpy(newNode->name, key_name);
+        newNode->salary = salary;
+        newNode->hash = hash;
+
+        head = newNode;
+        rwlock_release_writelock(&mutex);
+        return;
+    }
 
     //if found, update it; if not, add it to the LL
     hashRecord* temp = head;
@@ -71,7 +86,7 @@ void insert(char* key_name, uint32_t salary) {
             break;
         }
         else if (temp->next == NULL) {
-            hashRecord* newNode = (hashRecord*)malloc(sizeof(hashRecord));
+            hashRecord* newNode = malloc(sizeof(hashRecord));
             strcpy(newNode->name, key_name);
             newNode->salary = salary;
             newNode->hash = hash;
@@ -90,7 +105,7 @@ void insert(char* key_name, uint32_t salary) {
 //deletes key-value pair node if it exists
 void delete(char* key_name) {
     //compute the hash value of the key
-    uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name));
+    uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, sizeof(key_name) - 1);
 
     //acquire the writer-lock
 
@@ -103,43 +118,66 @@ void delete(char* key_name) {
 
 //searches for key-value pair node and if found, returns the value; if not found, returns NULL
 //if found, the caller prints the record; otherwise, the caller prints "No Record Found"
-uint32_t search(char* key_name) {
+hashRecord* search(char* key_name) {
     //compute the hash value of the key
-    uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name));
+    uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, sizeof(key_name) - 1);
 
     // acquire reader-lock
+    rwlock_acquire_readlock(&mutex);
 
     //search LL for the key
+    hashRecord* temp = head;
+
+    while (temp != NULL)
+    {
+        if (temp->hash == hash)
+        {
+            rwlock_release_readlock(&mutex);
+            return temp;
+        }
+
+        temp = temp->next;
+    }
 
     //if found, return value; otherwise, return null
+    rwlock_release_readlock(&mutex);
+    return NULL;
 }
 
 void rwlock_init(rwlock_t* lock) {
     lock->readers = 0;
-    Sem_init(&lock->lock, 1);
-    Sem_init(&lock->writelock, 1);
+    sem_init(&lock->lock, 0, 1);
+    sem_init(&lock->writelock, 0, 1);
 }
 
 void rwlock_acquire_readlock(rwlock_t* lock) {
-    Sem_wait(&lock->lock);
+    sem_wait(&lock->lock);
     lock->readers++;
     if (lock->readers == 1)
-        Sem_wait(&lock->writelock);
-    Sem_post(&lock->lock);
+        sem_wait(&lock->writelock);
+    sem_post(&lock->lock);
+
+    lock_acquisitions++;
 }
 
 void rwlock_release_readlock(rwlock_t* lock) {
-    Sem_wait(&lock->lock);
+    sem_wait(&lock->lock);
     lock->readers--;
     if (lock->readers == 0)
-        Sem_post(&lock->writelock);
-    Sem_post(&lock->lock);
+        sem_post(&lock->writelock);
+    sem_post(&lock->lock);
+
+    lock_releases++;
 }
 
 void rwlock_acquire_writelock(rwlock_t* lock) {
-    Sem_wait(&lock->writelock);
+    sem_wait(&lock->writelock);
+
+    lock_acquisitions++;
 }
 
 void rwlock_release_writelock(rwlock_t* lock) {
-    Sem_post(&lock->writelock);
+    sem_post(&lock->writelock);
+
+    lock_releases++;
 }
