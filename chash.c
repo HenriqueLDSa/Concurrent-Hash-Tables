@@ -5,6 +5,9 @@
 #include <pthread.h>
 #include <semaphore.h>
 
+// Define the name of the file to be read HERE
+static const char FILENAME[] = "commands.txt";
+
 typedef struct hash_struct {
     uint32_t hash;
     char name[50];
@@ -35,8 +38,32 @@ int lock_acquisitions = 0;
 int lock_releases = 0;
 
 int main() {
+  // Open File
+  FILE *fp;
+  fp = fopen(FILENAME, "r");
 
-    return 0;
+  // Variable Declaration
+  char buffer[2][30]; // This just consumes 2 of the strings in the first line
+                      // that are not useful
+  char command[30];
+  char name[30];
+  int salary = 0;
+  int numOfThreads = 0;
+
+  // Read first line of the file to get the numOfThreads
+  fscanf(fp, "%[^,],%d,%s", buffer[0], &numOfThreads, buffer[1]);
+
+  // Loop each line of the file
+  for(int i = 0; i < numOfThreads; i++)
+  {
+    fscanf(fp, "%[^,],%[^,],%d", command, name, &salary);
+    // EVERYTHING SHOULD BE PROCESSED HERE    
+  }
+
+  // Close file
+  fclose(fp);
+
+  return 0;
 }
 
 uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length) {
