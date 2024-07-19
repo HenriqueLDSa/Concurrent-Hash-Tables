@@ -67,8 +67,19 @@ void insert(char key_name[], uint32_t salary) {
         if (temp->hash == hash) {
             strcpy(temp->name, key_name);
             temp->salary = salary;
+            break;
+        }
+        else if (temp->next == NULL) {
+            hashRecord* newNode = malloc(sizeof(hashRecord));
+            strcpy(newNode->name, key_name);
+            newNode->salary = salary;
+            newNode->hash = hash;
+
+            newNode->next = temp->next;
+            temp->next = newNode;
         }
 
+        temp = temp->next;
     }
 
     //release writer-lock
