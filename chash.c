@@ -59,11 +59,13 @@ int main() {
     // Read first line of the file to get the numOfThreads
     fscanf(fp, "%[^,],%d,%s", buffer[0], &numOfThreads, buffer[1]);
 
+    pthread_t threads[numOfThreads];
+
     // Loop each line of the file
     for (int i = 0; i < numOfThreads; i++)
     {
         fscanf(fp, "%[^,],%[^,],%d", command, name, &salary);
-        // EVERYTHING SHOULD BE PROCESSED HERE    
+        // EVERYTHING SHOULD BE PROCESSED HERE   
     }
 
     // Close file
