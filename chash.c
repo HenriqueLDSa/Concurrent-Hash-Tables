@@ -26,6 +26,9 @@ uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length);
 void insert(char* key_name, uint32_t salary);
 void delete(char* key_name);
 hashRecord* search(char* key_name);
+void* insert_t(void* arg);
+void* search_t(void* arg);
+void* delete_t(void* arg);
 void rwlock_acquire_readlock(rwlock_t* lock);
 void rwlock_release_readlock(rwlock_t* lock);
 void rwlock_acquire_writelock(rwlock_t* lock);
@@ -60,16 +63,23 @@ int main() {
     fscanf(fp, "%[^,],%d,%s", buffer[0], &numOfThreads, buffer[1]);
 
     pthread_t threads[numOfThreads];
+    hashRecord* buff = malloc(sizeof(hashRecord));
 
     // Loop each line of the file
     for (int i = 0; i < numOfThreads; i++)
     {
         fscanf(fp, "%[^,],%[^,],%d", command, name, &salary);
-        // EVERYTHING SHOULD BE PROCESSED HERE   
+        strcpy(buff->name, name);
+        buff->salary = salary;
+
+        // EVERYTHING SHOULD BE PROCESSED HERE     
     }
+
+    free(buff);
 
     // Close file
     fclose(fp);
+
 
     return 0;
 }
@@ -176,6 +186,24 @@ hashRecord* search(char* key_name) {
 
     //if found, return value; otherwise, return null
     rwlock_release_readlock(&mutex);
+    return NULL;
+}
+
+void* insert_t(void* arg) {
+    hashRecord* record = (hashRecord*)arg;
+    insert(record->name, record->salary);
+    return NULL;
+}
+
+void* search_t(void* arg) {
+    hashRecord* record = (hashRecord*)arg;
+    search(record->name);
+    return NULL;
+}
+
+void* delete_t(void* arg) {
+    hashRecord* record = (hashRecord*)arg;
+    delete(record->name);
     return NULL;
 }
 
