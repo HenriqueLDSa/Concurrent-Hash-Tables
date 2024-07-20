@@ -42,6 +42,10 @@ int main() {
     FILE* fp;
     fp = fopen(FILENAME, "r");
 
+    if (fp == NULL) {
+        printf("Error: File \"%s\" not found.", FILENAME);
+    }
+
     // Variable Declaration
     char buffer[2][30]; // This just consumes 2 of the strings in the first line
                         // that are not useful
