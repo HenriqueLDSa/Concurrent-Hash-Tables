@@ -143,12 +143,42 @@ void delete(char* key_name) {
     uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name));
 
     //acquire the writer-lock
+    rwlock_acquire_readlock(&mutex);
 
     //search LL for the key
+    hashRecord* temp = head;
+    hashRecord* prev = NULL;
+    //if first node is the one to be deleted, unlink and delete
+    if(temp->hash == hash && temp != NULL)
+    {
+        head = head->next;
+        temp->next = NULL;
+        free(temp);
+        return;
+    }
 
-    //if key is found, remove node and free memory; otherwise, do nothing and return
+    //search each node and stop if it is the one to be deleted
+    while(temp->hash != hash && temp != NULL)
+    {
+        prev = temp;
+        temp = temp->next;
+    }
+
+    //if node does not exist, return
+    if(temp == NULL)
+    {
+        return;
+    }
+
+    //if node does exist, unlink and delete
+    if(temp->hash == hash)
+    {
+        prev->next = temp->next;
+        free(temp);
+    }
 
     //release writer-lock and return
+    rwlock_release_writelock(&mutex);
 }
 
 //searches for key-value pair node and if found, returns the value; if not found, returns NULL
