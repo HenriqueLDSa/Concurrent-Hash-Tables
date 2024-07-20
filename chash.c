@@ -39,31 +39,33 @@ int lock_releases = 0;
 
 int main() {
   // Open File
-  FILE *fp;
-  fp = fopen(FILENAME, "r");
+    FILE* fp;
+    fp = fopen(FILENAME, "r");
 
-  // Variable Declaration
-  char buffer[2][30]; // This just consumes 2 of the strings in the first line
-                      // that are not useful
-  char command[30];
-  char name[30];
-  int salary = 0;
-  int numOfThreads = 0;
+    // Variable Declaration
+    char buffer[2][30]; // This just consumes 2 of the strings in the first line
+                        // that are not useful
+    char command[30];
+    char name[30];
+    int salary = 0;
+    int numOfThreads = 0;
 
-  // Read first line of the file to get the numOfThreads
-  fscanf(fp, "%[^,],%d,%s", buffer[0], &numOfThreads, buffer[1]);
+    rwlock_init(&mutex);
 
-  // Loop each line of the file
-  for(int i = 0; i < numOfThreads; i++)
-  {
-    fscanf(fp, "%[^,],%[^,],%d", command, name, &salary);
-    // EVERYTHING SHOULD BE PROCESSED HERE    
-  }
+    // Read first line of the file to get the numOfThreads
+    fscanf(fp, "%[^,],%d,%s", buffer[0], &numOfThreads, buffer[1]);
 
-  // Close file
-  fclose(fp);
+    // Loop each line of the file
+    for (int i = 0; i < numOfThreads; i++)
+    {
+        fscanf(fp, "%[^,],%[^,],%d", command, name, &salary);
+        // EVERYTHING SHOULD BE PROCESSED HERE    
+    }
 
-  return 0;
+    // Close file
+    fclose(fp);
+
+    return 0;
 }
 
 uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length) {
@@ -87,8 +89,8 @@ uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length) {
 //inserts a new key-value pair node or updates an existing one
 void insert(char* key_name, uint32_t salary) {
     //compute the hash value of the key
-    uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name) - 1);
-    
+    uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name));
+
     //acquire the writer-lock that protects the list and searches the linked list for the hash
     rwlock_acquire_writelock(&mutex);
 
@@ -132,7 +134,7 @@ void insert(char* key_name, uint32_t salary) {
 //deletes key-value pair node if it exists
 void delete(char* key_name) {
     //compute the hash value of the key
-    uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, sizeof(key_name) - 1);
+    uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name));
 
     //acquire the writer-lock
 
@@ -147,7 +149,7 @@ void delete(char* key_name) {
 //if found, the caller prints the record; otherwise, the caller prints "No Record Found"
 hashRecord* search(char* key_name) {
     //compute the hash value of the key
-    uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, sizeof(key_name) - 1);
+    uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name));
 
     // acquire reader-lock
     rwlock_acquire_readlock(&mutex);
@@ -182,19 +184,19 @@ void rwlock_acquire_readlock(rwlock_t* lock) {
     lock->readers++;
     if (lock->readers == 1)
         sem_wait(&lock->writelock);
-    sem_post(&lock->lock);
 
     lock_acquisitions++;
+    sem_post(&lock->lock);
+
 }
 
 void rwlock_release_readlock(rwlock_t* lock) {
     sem_wait(&lock->lock);
     lock->readers--;
+    lock_releases++;
     if (lock->readers == 0)
         sem_post(&lock->writelock);
     sem_post(&lock->lock);
-
-    lock_releases++;
 }
 
 void rwlock_acquire_writelock(rwlock_t* lock) {
@@ -204,7 +206,7 @@ void rwlock_acquire_writelock(rwlock_t* lock) {
 }
 
 void rwlock_release_writelock(rwlock_t* lock) {
-    sem_post(&lock->writelock);
-
     lock_releases++;
+
+    sem_post(&lock->writelock);
 }
