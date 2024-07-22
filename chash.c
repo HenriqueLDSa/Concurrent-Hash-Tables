@@ -45,6 +45,7 @@ rwlock_t mutex;
 hashRecord* head = NULL;
 int lock_acquisitions = 0;
 int lock_releases = 0;
+long long curr_time;
 
 int main() {
     // Open File
@@ -63,7 +64,7 @@ int main() {
     // Variable Declaration
     char buffer[2][30]; // This just consumes 2 of the strings in the first line
                         // that are not useful
-    char command[30];
+    char command[50];
     char name[30];
     int salary = 0;
     int numOfThreads = 0;
@@ -81,11 +82,21 @@ int main() {
     // Loop each line of the file
     for (int i = 0; i < numOfThreads; i++)
     {
-        fscanf(fp, "%[^,],%[^,],%d", command, name, &salary);
-        strcpy(buff->name, name);
-        buff->salary = salary;
+        fscanf(fp, "%[^,],%[^,],%d", command, buff->name, &buff->salary);
 
-        // EVERYTHING SHOULD BE PROCESSED HERE     
+        // EVERYTHING SHOULD BE PROCESSED HERE  
+        if (command == "insert") {
+            pthread_create(&threads[i], NULL, insert_t, buff);
+        }
+        else if (command == "delete") {
+            pthread_create(&threads[i], NULL, delete_t, buff);
+        }
+        else if (command == "search") {
+            pthread_create(&threads[i], NULL, search_t, buff);
+        }
+        else if (command == "print") {
+            pthread_create(&threads[i], NULL, print_t, buff);
+        }
     }
 
     free(buff);
@@ -119,14 +130,14 @@ void insert(char* key_name, uint32_t salary) {
     //compute the hash value of the key
     uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name));
 
-    long long curr_time = current_timestamp();
-    fprintf(out, "%d: INSERT,%d,%s,%d\n", curr_time, hash, key_name, salary);
+    curr_time = current_timestamp();
+    fprintf(out, "%lld: INSERT,%d,%s,%d\n", curr_time, hash, key_name, salary);
 
     //acquire the writer-lock that protects the list and searches the linked list for the hash
     rwlock_acquire_writelock(&mutex);
 
     curr_time = current_timestamp();
-    fprintf(out, "%d: WRITE LOCK ACQUIRED\n", curr_time);
+    fprintf(out, "%lld: WRITE LOCK ACQUIRED\n", curr_time);
 
     if (head == NULL)
     {
@@ -138,7 +149,7 @@ void insert(char* key_name, uint32_t salary) {
         head = newNode;
 
         curr_time = current_timestamp();
-        fprintf(out, "%d: WRITE LOCK RELEASED\n", curr_time);
+        fprintf(out, "%lld: WRITE LOCK RELEASED\n", curr_time);
         rwlock_release_writelock(&mutex);
 
         return;
@@ -167,7 +178,7 @@ void insert(char* key_name, uint32_t salary) {
 
     //release writer-lock
     curr_time = current_timestamp();
-    fprintf(out, "%d: WRITE LOCK RELEASED\n", curr_time);
+    fprintf(out, "%lld: WRITE LOCK RELEASED\n", curr_time);
     rwlock_release_writelock(&mutex);
 
     return;
@@ -178,14 +189,14 @@ void delete(char* key_name) {
     //compute the hash value of the key
     uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name));
 
-    long long curr_time = current_timestamp();
-    fprintf(out, "%d: DELETE,%s\n", curr_time, key_name);
+    curr_time = current_timestamp();
+    fprintf(out, "%lld: DELETE,%s\n", curr_time, key_name);
 
     //acquire the writer-lock
     rwlock_acquire_writelock(&mutex);
 
     curr_time = current_timestamp();
-    fprintf(out, "%d: WRITE LOCK ACQUIRED\n", curr_time);
+    fprintf(out, "%lld: WRITE LOCK ACQUIRED\n", curr_time);
 
     //search LL for the key
     hashRecord* temp = head;
@@ -209,7 +220,7 @@ void delete(char* key_name) {
 
     //release writer-lock and return
     curr_time = current_timestamp();
-    fprintf(out, "%d: WRITE LOCK RELEASED\n", curr_time);
+    fprintf(out, "%lld: WRITE LOCK RELEASED\n", curr_time);
 
     rwlock_release_writelock(&mutex);
 
@@ -222,8 +233,14 @@ hashRecord* search(char* key_name) {
     //compute the hash value of the key
     uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name));
 
+    curr_time = current_timestamp();
+    fprintf(out, "%lld: SEARCH,%s\n", curr_time, key_name);
+
     // acquire reader-lock
     rwlock_acquire_readlock(&mutex);
+
+    curr_time = current_timestamp();
+    fprintf(out, "%lld: READ LOCK ACQUIRED\n", curr_time);
 
     //search LL for the key
     hashRecord* temp = head;
@@ -232,12 +249,18 @@ hashRecord* search(char* key_name) {
     {
         if (temp->hash == hash)
         {
+            curr_time = current_timestamp();
+            fprintf(out, "%lld: READ LOCK RELEASED\n", curr_time);
+
             rwlock_release_readlock(&mutex);
             return temp;
         }
 
         temp = temp->next;
     }
+
+    curr_time = current_timestamp();
+    fprintf(out, "%lld: READ LOCK RELEASED\n", curr_time);
 
     rwlock_release_readlock(&mutex);
     return NULL;
@@ -258,6 +281,12 @@ void* search_t(void* arg) {
 void* delete_t(void* arg) {
     hashRecord* record = (hashRecord*)arg;
     delete(record->name);
+    return NULL;
+}
+
+void* print_t(void* arg) {
+    hashRecord* record = (hashRecord*)arg;
+    //print_table(record->name, record->salary);
     return NULL;
 }
 
