@@ -120,7 +120,6 @@ void insert(char* key_name, uint32_t salary) {
     uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name));
 
     long long curr_time = current_timestamp();
-
     fprintf(out, "%d: INSERT,%d,%s,%d\n", curr_time, hash, key_name, salary);
 
     //acquire the writer-lock that protects the list and searches the linked list for the hash
@@ -179,8 +178,14 @@ void delete(char* key_name) {
     //compute the hash value of the key
     uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name));
 
+    long long curr_time = current_timestamp();
+    fprintf(out, "%d: DELETE,%s\n", curr_time, key_name);
+
     //acquire the writer-lock
     rwlock_acquire_writelock(&mutex);
+
+    curr_time = current_timestamp();
+    fprintf(out, "%d: WRITE LOCK ACQUIRED\n", curr_time);
 
     //search LL for the key
     hashRecord* temp = head;
@@ -203,6 +208,9 @@ void delete(char* key_name) {
     }
 
     //release writer-lock and return
+    curr_time = current_timestamp();
+    fprintf(out, "%d: WRITE LOCK RELEASED\n", curr_time);
+
     rwlock_release_writelock(&mutex);
 
     return;
