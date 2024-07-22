@@ -29,6 +29,7 @@ uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length);
 void insert(char* key_name, uint32_t salary);
 void delete(char* key_name);
 hashRecord* search(char* key_name);
+void print_table();
 void* insert_t(void* arg);
 void* search_t(void* arg);
 void* delete_t(void* arg);
@@ -106,9 +107,12 @@ int main() {
         }
     }
 
-    free(buff);
+    fprintf(out, "Finished all threads.\n");
+    fprintf(out, "Number of lock acquisitions: %d\n", lock_acquisitions);
+    fprintf(out, "Number of lock releases: %d\n", lock_releases);
+    print_table();
 
-    // Close file
+    free(buff);
     fclose(fp);
 
     return 0;
@@ -282,9 +286,9 @@ void print_table()
     //print contents of table
     while(temp != NULL)
     {
-        printf("%lu,", (unsigned long)temp->hash);
-        printf("%s,", temp->name);
-        printf("%lu\n", (unsigned long)temp->hash);
+        fprintf(out, "%lu,", (unsigned long)temp->hash);
+        fprintf(out, "%s,", temp->name);
+        fprintf(out, "%d\n", temp->salary);
 
         temp = temp->next;
     }
@@ -330,7 +334,6 @@ void rwlock_acquire_readlock(rwlock_t* lock) {
 
     lock_acquisitions++;
     sem_post(&lock->lock);
-
 }
 
 void rwlock_release_readlock(rwlock_t* lock) {
