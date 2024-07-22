@@ -73,7 +73,7 @@ int main() {
     rwlock_init(&mutex);
 
     // Read first line of the file to get the numOfThreads
-    fscanf(fp, "%[^,],%d,%s", buffer[0], &numOfThreads, buffer[1]);
+    fscanf(fp, "%[^,],%d,%s\n", buffer[0], &numOfThreads, buffer[1]);
 
     fprintf(out, "Running %d threads\n", numOfThreads);
 
@@ -83,20 +83,25 @@ int main() {
     // Loop each line of the file
     for (int i = 0; i < numOfThreads; i++)
     {
-        fscanf(fp, "%[^,],%[^,],%d", command, buff->name, &buff->salary);
+        fscanf(fp, "%[^,],%[^,],%d\n", command, buff->name, &buff->salary);
 
         // EVERYTHING SHOULD BE PROCESSED HERE  
-        if (strcmp(command, "insert")) {
+        if (command[0] == 'i') {
             pthread_create(&threads[i], NULL, insert_t, buff);
         }
-        else if (strcmp(command, "delete")) {
+        else if (command[0] == 'd') {
             pthread_create(&threads[i], NULL, delete_t, buff);
         }
-        else if (strcmp(command, "search")) {
+        else if (command[0] == 's') {
             pthread_create(&threads[i], NULL, search_t, buff);
         }
-        else if (strcmp(command, "print")) {
+        else if (command[0] == 'p') {
             pthread_create(&threads[i], NULL, print_t, buff);
+        }
+        else
+        {
+            printf("Fatal error reading file commands.");
+            return 1;
         }
     }
 
@@ -278,7 +283,7 @@ void print_table()
     {
         printf("%lu,", (unsigned long)temp->hash);
         printf("%s,", temp->name);
-        printf("%lu", (unsigned long)temp->hash);
+        printf("%lu\n", (unsigned long)temp->hash);
 
         temp = temp->next;
     }
