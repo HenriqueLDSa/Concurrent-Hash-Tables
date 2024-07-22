@@ -122,13 +122,13 @@ void insert(char* key_name, uint32_t salary) {
 
     long long curr_time = current_timestamp();
 
-    fprintf(out, "%d: INSERT,%d,%s,%d", curr_time, hash, key_name, salary);
+    fprintf(out, "%d: INSERT,%d,%s,%d\n", curr_time, hash, key_name, salary);
 
     //acquire the writer-lock that protects the list and searches the linked list for the hash
     rwlock_acquire_writelock(&mutex);
 
     curr_time = current_timestamp();
-    fprintf(out, "%d: WRITE LOCK ACQUIRED", curr_time);
+    fprintf(out, "%d: WRITE LOCK ACQUIRED\n", curr_time);
 
     if (head == NULL)
     {
@@ -140,7 +140,7 @@ void insert(char* key_name, uint32_t salary) {
         head = newNode;
 
         curr_time = current_timestamp();
-        fprintf(out, "%d: WRITE LOCK RELEASED", curr_time);
+        fprintf(out, "%d: WRITE LOCK RELEASED\n", curr_time);
         rwlock_release_writelock(&mutex);
 
         return;
@@ -169,7 +169,7 @@ void insert(char* key_name, uint32_t salary) {
 
     //release writer-lock
     curr_time = current_timestamp();
-    fprintf(out, "%d: WRITE LOCK RELEASED", curr_time);
+    fprintf(out, "%d: WRITE LOCK RELEASED\n", curr_time);
     rwlock_release_writelock(&mutex);
 
     return;
