@@ -269,6 +269,9 @@ hashRecord* search(char* key_name) {
 
 void print_table()
 {
+    //acquire read-lock
+    rwlock_acquire_readlock(&mutex);
+
     hashRecord* temp = head;
     //print contents of table
     while(temp != NULL)
@@ -279,6 +282,9 @@ void print_table()
 
         temp = temp->next;
     }
+
+    //release read-lock
+    rwlock_release_readlock(&mutex);
 }
 
 void* insert_t(void* arg) {
