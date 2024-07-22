@@ -4,9 +4,10 @@
 #include <string.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <inttypes.h>
 #include "sys/time.h"
 
-// Define the name of the file to be read HERE
+// Define the name of the files
 static const char FILENAME[] = "commands.txt";
 static const char OUTPUT_FILENAME[] = "output.txt";
 
@@ -23,7 +24,7 @@ typedef struct _rwlock_t {
     int readers;
 } rwlock_t;
 
-
+// Prototypes
 uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length);
 void insert(char* key_name, uint32_t salary);
 void delete(char* key_name);
@@ -66,14 +67,12 @@ int main() {
     char buffer[2][30]; // This just consumes 2 of the strings in the first line
                         // that are not useful
     char command[50];
-    char name[30];
-    int salary = 0;
     int numOfThreads = 0;
 
     rwlock_init(&mutex);
 
     // Read first line of the file to get the numOfThreads
-    fscanf(fp, "%[^,],%d,%s\n", buffer[0], &numOfThreads, buffer[1]);
+    fscanf(fp, "%[^,],%d,%s ", buffer[0], &numOfThreads, buffer[1]);
 
     fprintf(out, "Running %d threads\n", numOfThreads);
 
@@ -83,23 +82,25 @@ int main() {
     // Loop each line of the file
     for (int i = 0; i < numOfThreads; i++)
     {
-        fscanf(fp, "%[^,],%[^,],%d\n", command, buff->name, &buff->salary);
+        fscanf(fp, "%[^,],%[^,],%d ", command, buff->name, &buff->salary);
 
-        // EVERYTHING SHOULD BE PROCESSED HERE  
-        if (command[0] == 'i') {
+        if (!strcmp(command, "insert")) {
             pthread_create(&threads[i], NULL, insert_t, buff);
+            pthread_join(threads[i], NULL);
         }
-        else if (command[0] == 'd') {
+        else if (!strcmp(command, "delete")) {
             pthread_create(&threads[i], NULL, delete_t, buff);
+            pthread_join(threads[i], NULL);
         }
-        else if (command[0] == 's') {
+        else if (!strcmp(command, "search")) {
             pthread_create(&threads[i], NULL, search_t, buff);
+            pthread_join(threads[i], NULL);
         }
-        else if (command[0] == 'p') {
+        else if (!strcmp(command, "print")) {
             pthread_create(&threads[i], NULL, print_t, buff);
+            pthread_join(threads[i], NULL);
         }
-        else
-        {
+        else {
             printf("Fatal error reading file commands.");
             return 1;
         }
@@ -137,7 +138,7 @@ void insert(char* key_name, uint32_t salary) {
     uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name));
 
     curr_time = current_timestamp();
-    fprintf(out, "%lld: INSERT,%d,%s,%d\n", curr_time, hash, key_name, salary);
+    fprintf(out, "%lld: INSERT,%"PRIu32",%s,%d\n", curr_time, hash, key_name, salary);
 
     //acquire the writer-lock that protects the list and searches the linked list for the hash
     rwlock_acquire_writelock(&mutex);
@@ -283,7 +284,7 @@ void print_table()
     {
         printf("%lu,", (unsigned long)temp->hash);
         printf("%s,", temp->name);
-        printf("%lu\n", (unsigned long)temp->hash);
+        printf("%lu", (unsigned long)temp->hash);
 
         temp = temp->next;
     }
