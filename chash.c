@@ -9,7 +9,7 @@
 
 // Define the name of the files
 static const char FILENAME[] = "commands.txt";
-static const char OUTPUT_FILENAME[] = "output2.txt";
+static const char OUTPUT_FILENAME[] = "output.txt";
 
 typedef struct hash_struct {
     uint32_t hash;
