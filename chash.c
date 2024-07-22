@@ -4,6 +4,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include "sys/time.h"
 
 // Define the name of the file to be read HERE
 static const char FILENAME[] = "commands.txt";
@@ -36,6 +37,7 @@ void rwlock_release_readlock(rwlock_t* lock);
 void rwlock_acquire_writelock(rwlock_t* lock);
 void rwlock_release_writelock(rwlock_t* lock);
 void rwlock_init(rwlock_t* lock);
+long long current_timestamp();
 
 FILE* fp;
 FILE* out;
@@ -52,9 +54,11 @@ int main() {
 
     if (fp == NULL) {
         printf("Error: File \"%s\" not found.", FILENAME);
+        exit(1);
     }
     if (out == NULL) {
         printf("Error opening file \"%s\".", OUTPUT_FILENAME);
+        exit(1);
     }
 
     // Variable Declaration
@@ -69,6 +73,8 @@ int main() {
 
     // Read first line of the file to get the numOfThreads
     fscanf(fp, "%[^,],%d,%s", buffer[0], &numOfThreads, buffer[1]);
+
+    fprintf(out, "Running %d threads\n", numOfThreads);
 
     pthread_t threads[numOfThreads];
     hashRecord* buff = malloc(sizeof(hashRecord));
@@ -87,7 +93,6 @@ int main() {
 
     // Close file
     fclose(fp);
-
 
     return 0;
 }
@@ -115,8 +120,15 @@ void insert(char* key_name, uint32_t salary) {
     //compute the hash value of the key
     uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name));
 
+    long long curr_time = current_timestamp();
+
+    fprintf(out, "%d: INSERT,%d,%s,%d", curr_time, hash, key_name, salary);
+
     //acquire the writer-lock that protects the list and searches the linked list for the hash
     rwlock_acquire_writelock(&mutex);
+
+    curr_time = current_timestamp();
+    fprintf(out, "%d: WRITE LOCK ACQUIRED", curr_time);
 
     if (head == NULL)
     {
@@ -126,7 +138,11 @@ void insert(char* key_name, uint32_t salary) {
         newNode->hash = hash;
 
         head = newNode;
+
+        curr_time = current_timestamp();
+        fprintf(out, "%d: WRITE LOCK RELEASED", curr_time);
         rwlock_release_writelock(&mutex);
+
         return;
     }
 
@@ -152,6 +168,8 @@ void insert(char* key_name, uint32_t salary) {
     }
 
     //release writer-lock
+    curr_time = current_timestamp();
+    fprintf(out, "%d: WRITE LOCK RELEASED", curr_time);
     rwlock_release_writelock(&mutex);
 
     return;
@@ -272,4 +290,11 @@ void rwlock_release_writelock(rwlock_t* lock) {
     lock_releases++;
 
     sem_post(&lock->writelock);
+}
+
+long long current_timestamp() {
+    struct timeval te;
+    gettimeofday(&te, NULL); // get current time
+    long long microseconds = (te.tv_sec * 1000000) + te.tv_usec; // calculate milliseconds
+    return microseconds;
 }
