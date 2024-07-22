@@ -10,7 +10,6 @@
 static const char FILENAME[] = "commands.txt";
 static const char OUTPUT_FILENAME[] = "output.txt";
 
-
 typedef struct hash_struct {
     uint32_t hash;
     char name[50];
