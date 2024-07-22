@@ -7,6 +7,10 @@ RM = rm -f
 OBJECTS = chash.o
 
 .PRECIOUS: $(CHASH)
+.PHONY: output
+
+output: chash 
+	./chash
 
 chash: chash.o
 	$(CC) $(CFLAGS) -o $(CHASH) $(OBJECTS)
@@ -15,4 +19,4 @@ chash: chash.o
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	$(RM) *.o $(CHASH)
+	$(RM) *.o $(CHASH) output.txt

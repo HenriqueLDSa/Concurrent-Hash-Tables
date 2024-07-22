@@ -284,7 +284,7 @@ void print_table()
     {
         printf("%lu,", (unsigned long)temp->hash);
         printf("%s,", temp->name);
-        printf("%lu", (unsigned long)temp->hash);
+        printf("%lu\n", (unsigned long)temp->hash);
 
         temp = temp->next;
     }
@@ -312,7 +312,6 @@ void* delete_t(void* arg) {
 }
 
 void* print_t(void* arg) {
-    hashRecord* record = (hashRecord*)arg;
     print_table();
     return NULL;
 }
