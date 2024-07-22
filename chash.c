@@ -273,9 +273,9 @@ void print_table()
     //print contents of table
     while(temp != NULL)
     {
-        printf("%lu,", temp->hash);
+        printf("%lu,", (unsigned long)temp->hash);
         printf("%s,", temp->name);
-        printf("%lu", temp->hash);
+        printf("%lu", (unsigned long)temp->hash);
 
         temp = temp->next;
     }
