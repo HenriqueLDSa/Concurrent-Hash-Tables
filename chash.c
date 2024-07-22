@@ -267,6 +267,20 @@ hashRecord* search(char* key_name) {
     return NULL;
 }
 
+void print_table()
+{
+    hashRecord* temp = head;
+    //print contents of table
+    while(temp != NULL)
+    {
+        printf("%lu,", temp->hash);
+        printf("%s,", temp->name);
+        printf("%lu", temp->hash);
+
+        temp = temp->next;
+    }
+}
+
 void* insert_t(void* arg) {
     hashRecord* record = (hashRecord*)arg;
     insert(record->name, record->salary);
@@ -287,7 +301,7 @@ void* delete_t(void* arg) {
 
 void* print_t(void* arg) {
     hashRecord* record = (hashRecord*)arg;
-    //print_table(record->name, record->salary);
+    print_table();
     return NULL;
 }
 
