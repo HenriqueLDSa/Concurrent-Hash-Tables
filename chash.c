@@ -7,6 +7,8 @@
 
 // Define the name of the file to be read HERE
 static const char FILENAME[] = "commands.txt";
+static const char OUTPUT_FILENAME[] = "output.txt";
+
 
 typedef struct hash_struct {
     uint32_t hash;
@@ -35,18 +37,24 @@ void rwlock_acquire_writelock(rwlock_t* lock);
 void rwlock_release_writelock(rwlock_t* lock);
 void rwlock_init(rwlock_t* lock);
 
+FILE* fp;
+FILE* out;
+
 rwlock_t mutex;
 hashRecord* head = NULL;
 int lock_acquisitions = 0;
 int lock_releases = 0;
 
 int main() {
-  // Open File
-    FILE* fp;
+    // Open File
     fp = fopen(FILENAME, "r");
+    out = fopen(OUTPUT_FILENAME, "w");
 
     if (fp == NULL) {
         printf("Error: File \"%s\" not found.", FILENAME);
+    }
+    if (out == NULL) {
+        printf("Error opening file \"%s\".", OUTPUT_FILENAME);
     }
 
     // Variable Declaration
@@ -145,6 +153,8 @@ void insert(char* key_name, uint32_t salary) {
 
     //release writer-lock
     rwlock_release_writelock(&mutex);
+
+    return;
 }
 
 //deletes key-value pair node if it exists
@@ -153,12 +163,32 @@ void delete(char* key_name) {
     uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name));
 
     //acquire the writer-lock
+    rwlock_acquire_writelock(&mutex);
 
     //search LL for the key
+    hashRecord* temp = head;
+    hashRecord* prev = NULL;
 
-    //if key is found, remove node and free memory; otherwise, do nothing and return
+    while (temp != NULL)
+    {
+        if (temp->hash == hash)
+        {
+            (prev == NULL) ? (head = temp->next) : (prev->next = temp->next);
+
+            hashRecord* nodeToDelete = temp;
+            temp = temp->next;
+            free(nodeToDelete);
+            break;
+        }
+
+        prev = temp;
+        temp = temp->next;
+    }
 
     //release writer-lock and return
+    rwlock_release_writelock(&mutex);
+
+    return;
 }
 
 //searches for key-value pair node and if found, returns the value; if not found, returns NULL
@@ -184,7 +214,6 @@ hashRecord* search(char* key_name) {
         temp = temp->next;
     }
 
-    //if found, return value; otherwise, return null
     rwlock_release_readlock(&mutex);
     return NULL;
 }
