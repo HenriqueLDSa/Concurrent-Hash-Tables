@@ -31,6 +31,7 @@ hashRecord* search(char* key_name);
 void* insert_t(void* arg);
 void* search_t(void* arg);
 void* delete_t(void* arg);
+void* print_t(void* arg);
 void rwlock_acquire_readlock(rwlock_t* lock);
 void rwlock_release_readlock(rwlock_t* lock);
 void rwlock_acquire_writelock(rwlock_t* lock);
@@ -85,16 +86,16 @@ int main() {
         fscanf(fp, "%[^,],%[^,],%d", command, buff->name, &buff->salary);
 
         // EVERYTHING SHOULD BE PROCESSED HERE  
-        if (command == "insert") {
+        if (strcmp(command, "insert")) {
             pthread_create(&threads[i], NULL, insert_t, buff);
         }
-        else if (command == "delete") {
+        else if (strcmp(command, "delete")) {
             pthread_create(&threads[i], NULL, delete_t, buff);
         }
-        else if (command == "search") {
+        else if (strcmp(command, "search")) {
             pthread_create(&threads[i], NULL, search_t, buff);
         }
-        else if (command == "print") {
+        else if (strcmp(command, "print")) {
             pthread_create(&threads[i], NULL, print_t, buff);
         }
     }
