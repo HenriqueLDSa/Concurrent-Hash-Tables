@@ -16,12 +16,12 @@ University of Central Florida
 C
 
 ## To Compile and Execute
-1. **On terminal:**
+1. **To compile:**
     ```bash
     make
     ```
 
-2. **To execute:**
+2. **To compile and execute:**
     ```bash
     make run
     ```
