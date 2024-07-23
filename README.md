@@ -1,19 +1,27 @@
-# Concurrent-Hash-Tables
+# Concurrent Hash Tables
 
-Assignment:
+## Assignment
 PA2 | Concurrent Hash Tables
 
-Authors:
-Henrique Lacerda Delgado De Sa, Diego Lobo, Liam Kilkenny, Jace Adamski
+## Authors
+- Henrique Lacerda Delgado De Sa
+- Diego Lobo
+- Liam Kilkenny
+- Jace Adamski
 
-School:
+## School
 University of Central Florida
 
-Language:
+## Language
 C
 
-To Compile and Execute: \* On terminal:
-make
+## To Compile and Execute
+1. **On terminal:**
+    ```bash
+    make
+    ```
 
-To Compile and Execute: \* On terminal:
-make run
+2. **To execute:**
+    ```bash
+    make run
+    ```
