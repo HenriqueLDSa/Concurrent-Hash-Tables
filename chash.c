@@ -42,7 +42,7 @@ void rwlock_acquire_writelock(rwlock_t* lock);
 void rwlock_release_writelock(rwlock_t* lock);
 void rwlock_init(rwlock_t* lock);
 hashRecord* linkedList_to_sorted_array(hashRecord* head);
-void insertionSort(hashRecord* array, int length);
+void insertion_sort(hashRecord* array, int length);
 int getLength(hashRecord* head);
 
 // Global Variables
@@ -165,7 +165,6 @@ void insert(char* key_name, uint32_t salary) {
         return;
     }
 
-    // Uf found, update it; If not, add it to the LL
     hashRecord* temp = head;
 
     while (temp != NULL) {
@@ -386,7 +385,7 @@ hashRecord* linkedList_to_sorted_array(hashRecord* head) {
         current = current->next;
     }
 
-    insertionSort(array, length);
+    insertion_sort(array, length);
 
     return array;
 }
