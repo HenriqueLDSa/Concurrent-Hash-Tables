@@ -41,6 +41,9 @@ void rwlock_release_readlock(rwlock_t* lock);
 void rwlock_acquire_writelock(rwlock_t* lock);
 void rwlock_release_writelock(rwlock_t* lock);
 void rwlock_init(rwlock_t* lock);
+hashRecord* linkedList_to_sorted_array(hashRecord* head);
+void insertionSort(hashRecord* array, int length);
+int getLength(hashRecord* head);
 
 // Global Variables
 FILE* fp;
@@ -255,24 +258,24 @@ hashRecord* search(char* key_name) {
     return NULL;
 }
 
-void print_table()
-{
-    // Acquire read-lock
+void print_table() {
+
     rwlock_acquire_readlock(&mutex);
 
-    hashRecord* temp = head;
-    // Print contents of table
-    while(temp != NULL)
-    {
-        fprintf(out, "%lu,", (unsigned long)temp->hash);
-        fprintf(out, "%s,", temp->name);
-        fprintf(out, "%d\n", temp->salary);
+    hashRecord* array = linkedList_to_sorted_array(head);
+    int length = getLength(head);
 
-        temp = temp->next;
+    for (int i = 0; i < length; i++) {
+        fprintf(out, "%lu,", (unsigned long)array[i].hash);
+        fprintf(out, "%s,", array[i].name);
+        fprintf(out, "%d\n", array[i].salary);
     }
 
     rwlock_release_readlock(&mutex);
+
+    free(array);
 }
+
 
 void* insert_t(void* arg) {
     hashRecord* record = (hashRecord*)arg;
@@ -284,11 +287,12 @@ void* search_t(void* arg) {
     hashRecord* record = (hashRecord*)arg;
     hashRecord* res = search(record->name);
     if (res != NULL) {
-      fprintf(out, "%lld: Record found: %s, %d\n", current_timestamp(), res->name, res->salary);
-   } else {
-      fprintf(out, "%lld: No Record Found\n", current_timestamp());
-   }
-   return NULL;
+        fprintf(out, "%lld: Record found: %s, %d\n", current_timestamp(), res->name, res->salary);
+    }
+    else {
+        fprintf(out, "%lld: No Record Found\n", current_timestamp());
+    }
+    return NULL;
 }
 
 void* delete_t(void* arg) {
@@ -354,4 +358,49 @@ long long current_timestamp() {
     long long microseconds = (te.tv_sec * 1000000) + te.tv_usec; // Calculate milliseconds
 
     return microseconds;
+}
+
+// Function to find the length of the linked list
+int getLength(hashRecord* head) {
+    int length = 0;
+
+    hashRecord* current = head;
+    while (current != NULL) {
+        length++;
+        current = current->next;
+    }
+
+    return length;
+}
+
+// Function to convert linked list to array
+hashRecord* linkedList_to_sorted_array(hashRecord* head) {
+    int length = getLength(head);
+
+    hashRecord* array = (hashRecord*)malloc(length * sizeof(hashRecord));
+
+    hashRecord* current = head;
+
+    for (int i = 0; i < length; i++) {
+        array[i] = *current;
+        current = current->next;
+    }
+
+    insertionSort(array, length);
+
+    return array;
+}
+
+// Insertion sort function to sort the array of hashRecord by hash value
+void insertion_sort(hashRecord* array, int length) {
+    for (int i = 1; i < length; i++) {
+        hashRecord key = array[i];
+        int j = i - 1;
+
+        while (j >= 0 && array[j].hash > key.hash) {
+            array[j + 1] = array[j];
+            j--;
+        }
+        array[j + 1] = key;
+    }
 }
