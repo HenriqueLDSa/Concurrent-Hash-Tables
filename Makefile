@@ -1,22 +1,23 @@
 CC = gcc
-CFLAGS = -Wall -lpthread
+CFLAGS = -Wall
+LDFLAGS = -lpthread
 CHASH = chash
 RM = rm -f
 
-# Put all file names here with .o after
-OBJECTS = chash.o
+OBJECTS = chash.o hash_table.o thread_functions.o rwlock.o utils.o
 
-.PRECIOUS: $(CHASH)
-.PHONY: output
+.PHONY: all clean run
 
-output: chash 
-	./chash
+all: $(CHASH)
 
-chash: chash.o
-	$(CC) $(CFLAGS) -o $(CHASH) $(OBJECTS)
+$(CHASH): $(OBJECTS)
+	$(CC) $(OBJECTS) -o $(CHASH) $(LDFLAGS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	$(RM) *.o $(CHASH) output.txt
+
+run: all
+	./$(CHASH)
