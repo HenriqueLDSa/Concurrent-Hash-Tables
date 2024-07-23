@@ -15,7 +15,6 @@ extern rwlock_t mutex;
 extern hashRecord* head;
 extern int lock_acquisitions;
 extern int lock_releases;
-extern long long curr_time;
 
 uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length) {
     size_t i = 0;
@@ -38,8 +37,7 @@ uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length) {
 void insert(char* key_name, uint32_t salary) {
     uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name));
 
-    curr_time = current_timestamp();
-    fprintf(out, "%lld: INSERT,%"PRIu32",%s,%d\n", curr_time, hash, key_name, salary);
+    fprintf(out, "%lld: INSERT,%"PRIu32",%s,%d\n", current_timestamp(), hash, key_name, salary);
 
     rwlock_acquire_writelock(&mutex);
 
@@ -84,8 +82,7 @@ void insert(char* key_name, uint32_t salary) {
 void delete(char* key_name) {
     uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name));
 
-    curr_time = current_timestamp();
-    fprintf(out, "%lld: DELETE,%s\n", curr_time, key_name);
+    fprintf(out, "%lld: DELETE,%s\n", current_timestamp(), key_name);
 
     rwlock_acquire_writelock(&mutex);
 
@@ -115,8 +112,7 @@ void delete(char* key_name) {
 hashRecord* search(char* key_name) {
     uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name));
 
-    curr_time = current_timestamp();
-    fprintf(out, "%lld: SEARCH,%s\n", curr_time, key_name);
+    fprintf(out, "%lld: SEARCH,%s\n", current_timestamp(), key_name);
 
     rwlock_acquire_readlock(&mutex);
 

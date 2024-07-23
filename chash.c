@@ -15,7 +15,6 @@ rwlock_t mutex;
 hashRecord* head = NULL;
 int lock_acquisitions = 0;
 int lock_releases = 0;
-long long curr_time;
 
 int main() {
     fp = fopen(FILENAME, "r");
