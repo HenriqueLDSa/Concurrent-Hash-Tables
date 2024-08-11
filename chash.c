@@ -9,12 +9,17 @@
 static const char FILENAME[] = "commands.txt";
 static const char OUTPUT_FILENAME[] = "output.txt";
 
+pthread_mutex_t cond_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+
 FILE* fp;
 FILE* out;
 rwlock_t mutex;
 hashRecord* head = NULL;
 int lock_acquisitions = 0;
 int lock_releases = 0;
+int insert_count = 0;
+int insert_target = 0;
 
 int main() {
     fp = fopen(FILENAME, "r");

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include <pthread.h>
 
 extern const char FILENAME[];
 extern const char OUTPUT_FILENAME[];
@@ -12,6 +13,10 @@ extern const char OUTPUT_FILENAME[];
 extern FILE* fp;
 extern FILE* out;
 extern rwlock_t mutex;
+extern pthread_mutex_t cond_mutex;
+extern pthread_cond_t cond;
+extern int insert_count;
+extern int insert_target;
 extern hashRecord* head;
 extern int lock_acquisitions;
 extern int lock_releases;
@@ -40,6 +45,15 @@ void insert(char* key_name, uint32_t salary) {
     fprintf(out, "%lld: INSERT,%"PRIu32",%s,%d\n", current_timestamp(), hash, key_name, salary);
 
     rwlock_acquire_writelock(&mutex);
+
+    insert_target++;
+
+    pthread_mutex_lock(&cond_mutex);
+    insert_count++;
+    if (insert_count == insert_target) {
+        pthread_cond_signal(&cond); // Signal the division thread
+    }
+    pthread_mutex_unlock(&cond_mutex);
 
     if (head == NULL)
     {
@@ -83,6 +97,12 @@ void delete(char* key_name) {
     uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t*)key_name, strlen(key_name));
 
     fprintf(out, "%lld: DELETE,%s\n", current_timestamp(), key_name);
+
+    pthread_mutex_lock(&cond_mutex);
+    while (insert_count < insert_target) {
+        pthread_cond_wait(&cond, &cond_mutex);
+    }
+    pthread_mutex_unlock(&cond_mutex);
 
     rwlock_acquire_writelock(&mutex);
 
